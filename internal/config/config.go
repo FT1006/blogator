@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -19,7 +18,7 @@ func getConfigFilePath() (string, error) {
     if err != nil {
         return "", err
     }
-    return filepath.Join(homeDir, "project", "blogator", configFileName), nil
+    return filepath.Join(homeDir, configFileName), nil
 }
 
 func Read() (Config, error) {
@@ -40,7 +39,6 @@ func Read() (Config, error) {
     if err != nil {
         return Config{}, err
     }
-    fmt.Println(cfg)
     return cfg, nil
 }
 
@@ -58,7 +56,6 @@ func write(cfg Config) error {
 
     encoder := json.NewEncoder(file)
     err = encoder.Encode(cfg)
-    fmt.Println(cfg)
     if err != nil {
         return err
     }
