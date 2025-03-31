@@ -1,39 +1,63 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/FT1006/blogator/internal/config"
+	"github.com/FT1006/blogator/internal/database"
+
+	_ "github.com/lib/pq"
 )
 
 type state struct {
-	Config *config.Config
+	config *config.Config
+	db     *database.Queries
 }
 
-func newState(cfg *config.Config) *state {
+func newState(cfg *config.Config, db *database.Queries) *state {
 	return &state{
-		Config: cfg,
+		config: cfg,
+		db:     db,
 	}
 }
 
 func main() {
 	cfg, err := config.Read()
 	if err != nil {
-		log.Fatalf("error reading config: %v", err)	
+		log.Fatalf("error reading config: %v", err)
 	}
 
-	currentState := newState(&cfg)
+	// get the DB URL from config
+	dbURL := cfg.DBUrl
+
+	// open the database connection
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("error opening database: %v", err)
+	}
+
+	// defer closing the database connection
+	defer db.Close()
+
+	// create the database queries
+	dbQueries := database.New(db)
+
+	// create the state
+	currentState := newState(&cfg, dbQueries)
 
 	if len(os.Args) < 2 {
 		fmt.Println("Error: Not enough arguments provided")
-		os.Exit(1)  // Exit with non-zero status code to indicate an error
+		os.Exit(1) // Exit with non-zero status code to indicate an error
 	}
 
 	var cmdMap commands
 	cmdMap.CommandMap = make(map[string]func(*state, command) error)
 	cmdMap.register("login", handlerLogin)
+	cmdMap.register("register", handlerRegister)
+	cmdMap.register("reset", handlerReset)
 
 	cmd := command{
 		Name: os.Args[1],
