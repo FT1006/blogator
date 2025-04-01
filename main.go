@@ -64,6 +64,7 @@ func main() {
 	cmdMap.register("feeds", handlerFeeds)
 	cmdMap.register("follow", middlewareLoggedIn(handlerFollow))
 	cmdMap.register("following", middlewareLoggedIn(handlerFollowing))
+	cmdMap.register("unfollow", middlewareLoggedIn(handlerUnfollow))
 
 	cmd := command{
 		Name: os.Args[1],
