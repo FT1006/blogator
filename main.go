@@ -58,6 +58,12 @@ func main() {
 	cmdMap.register("login", handlerLogin)
 	cmdMap.register("register", handlerRegister)
 	cmdMap.register("reset", handlerReset)
+	cmdMap.register("users", handlerUsers)
+	cmdMap.register("agg", handlerAgg)
+	cmdMap.register("addfeed", middlewareLoggedIn(handlerAddFeed))
+	cmdMap.register("feeds", handlerFeeds)
+	cmdMap.register("follow", middlewareLoggedIn(handlerFollow))
+	cmdMap.register("following", middlewareLoggedIn(handlerFollowing))
 
 	cmd := command{
 		Name: os.Args[1],
