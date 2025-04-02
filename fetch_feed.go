@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/FT1006/blogator/internal/database"
+	"github.com/google/uuid"
 )
 
 func newClient() *http.Client {
@@ -37,7 +38,7 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 		return nil, err
 	}
 
-	fmt.Println("Response from", feedURL, ":", string(body[:200])) // Print first 200 chars
+	fmt.Println("Response from", feedURL, ":", string(body)) // Print first 200 chars
 	err = xml.Unmarshal(body, &rssFeed)
 	if err != nil {
 		return nil, err
@@ -59,7 +60,8 @@ func scrapeFeeds(ctx context.Context, s *state) {
 		if err != nil {
 			fmt.Printf("Error getting next feed to fetch: %v\n", err)
 		}
-		if _, err := fetchFeed(ctx, feed.Url); err != nil {
+		fetchedFeed, err := fetchFeed(ctx, feed.Url)
+		if err != nil {
 			fmt.Printf("Error fetchig next feed: %v\n", err)
 		}
 
@@ -74,7 +76,28 @@ func scrapeFeeds(ctx context.Context, s *state) {
 		if err != nil {
 			fmt.Printf("Error marking feed as fetched: %v\n", err)
 		} else {
-			fmt.Printf("Fetched %s\n", feed.Name)
+			if err != nil {
+				fmt.Printf("Error parsing pubDate: %v\n", err)
+			}
+			fetchedFeed = cleanFeed(fetchedFeed)
+			for _, item := range fetchedFeed.Channel.Item {
+				publishedAt, err := time.Parse(time.RFC1123, item.PubDate)
+				if err != nil {
+					fmt.Printf("Error parsing pubDate: %v\n", err)
+				}
+				if _, err = s.db.CreatePost(ctx, database.CreatePostParams{
+					ID:          uuid.New(),
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+					Title:       item.Title,
+					Url:         item.Link,
+					Description: sql.NullString{String: item.Description, Valid: true},
+					PublishedAt: publishedAt,
+					FeedID:      feed.ID,
+				}); err != nil {
+					fmt.Printf("Error creating post: %v\n", err)
+				}
+			}
 		}
 	}
 }

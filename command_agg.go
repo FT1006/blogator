@@ -27,8 +27,5 @@ func handlerAgg(s *state, cmd command) error {
 	for ; ; <-ticker.C {
 		fmt.Println("Fetching feeds...")
 		scrapeFeeds(context.Background(), s)
-		if err != nil {
-			return err
-		}
 	}
 }
