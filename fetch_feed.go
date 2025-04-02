@@ -38,7 +38,6 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 		return nil, err
 	}
 
-	fmt.Println("Response from", feedURL, ":", string(body)) // Print first 200 chars
 	err = xml.Unmarshal(body, &rssFeed)
 	if err != nil {
 		return nil, err
